@@ -37,6 +37,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
     FileResponse,
+    RedirectResponse,
     HTMLResponse,
     JSONResponse,
     Response,
@@ -46,6 +47,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
 
+import auth
 import bili_parser
 import dash_muxer
 import disk_saver
@@ -257,6 +259,87 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["Content-Disposition", "Content-Length", "Content-Range"],
 )
+
+
+# ---------------------------------------------------------------------------
+# 账号密码登录（设置了 AUTH_USER / AUTH_PASS 才启用，详见 auth.py）
+# ---------------------------------------------------------------------------
+@app.middleware("http")
+async def _auth_gate(request: Request, call_next):
+    if not auth.ENABLED or request.url.path in auth.PUBLIC_PATHS or auth.is_authed(request):
+        return await call_next(request)
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": "未登录或登录已过期，请重新登录"}, status_code=401)
+    target = request.url.path + (("?" + request.url.query) if request.url.query else "")
+    return RedirectResponse("/login?next=" + quote(target, safe=""), status_code=303)
+
+
+class LoginBody(BaseModel):
+    username: str = ""
+    password: str = ""
+    remember: bool = False
+
+
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+def _is_https(request: Request) -> bool:
+    return request.url.scheme == "https" or request.headers.get("x-forwarded-proto", "").lower() == "https"
+
+
+@app.get("/login", include_in_schema=False)
+def login_page(request: Request):
+    if not auth.ENABLED or auth.is_authed(request):
+        return RedirectResponse("/", status_code=303)
+    path = os.path.join(STATIC_DIR, "login.html")
+    with open(path, "r", encoding="utf-8") as handle:
+        html = handle.read()
+    return HTMLResponse(html, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/login", include_in_schema=False)
+async def api_login(body: LoginBody, request: Request):
+    if not auth.ENABLED:
+        return {"ok": True, "next": "/"}
+    ip = _client_ip(request)
+    wait = auth.locked_seconds(ip)
+    if wait:
+        return JSONResponse(
+            {"detail": "尝试次数过多，请 %d 分钟后再试" % max(1, (wait + 59) // 60)},
+            status_code=429,
+        )
+    if not auth.check_credentials(body.username.strip(), body.password):
+        auth.record_fail(ip)
+        time.sleep(0.5)  # 拖慢逐个试密码
+        return JSONResponse({"detail": "账号或密码不正确"}, status_code=401)
+    auth.record_ok(ip)
+    ttl = auth.LONG_TTL if body.remember else auth.SHORT_TTL
+    resp = JSONResponse({"ok": True})
+    resp.set_cookie(
+        auth.COOKIE_NAME,
+        auth.make_token(ttl),
+        max_age=ttl if body.remember else None,
+        httponly=True,
+        samesite="lax",
+        secure=_is_https(request),
+        path="/",
+    )
+    return resp
+
+
+@app.get("/logout", include_in_schema=False)
+@app.post("/api/logout", include_in_schema=False)
+def api_logout():
+    resp = RedirectResponse("/login", status_code=303)
+    resp.delete_cookie(auth.COOKIE_NAME, path="/")
+    return resp
+
+
+@app.get("/healthz", include_in_schema=False)
+def healthz():
+    return {"ok": True}
+
 
 
 class ParseRequest(BaseModel):
@@ -1174,6 +1257,7 @@ _saver = disk_saver.SaveManager()
 #: 丢给那个代理，表现为「下载一直停在 0%」。
 _LOOPBACK = requests.Session()
 _LOOPBACK.trust_env = False
+_LOOPBACK.headers[auth.INTERNAL_HEADER] = auth.INTERNAL_TOKEN
 
 
 def _save_local_url(source: str) -> str:
@@ -2089,6 +2173,12 @@ def _content_disposition(name: str, fallback: str = "download") -> str:
 # 把 8787 写死在 JS 里会在顺延后指向错误地址，所以改为渲染时注入。
 SERVICE_PORT_PLACEHOLDER = "__SERVICE_PORT__"
 
+# 登录启用时注入：右下角「退出登录」，以及会话过期（接口返回 401）时自动回到登录页
+_AUTH_SNIPPET = """
+<a href="/logout" id="wmLogout" style="position:fixed;right:14px;bottom:14px;z-index:50;padding:8px 14px;font-size:13px;border-radius:999px;background:rgba(20,20,30,.78);color:#fff;text-decoration:none;backdrop-filter:blur(8px)">退出登录</a>
+<script>(function(){var f=window.fetch;window.fetch=function(){return f.apply(this,arguments).then(function(r){if(r.status===401){location.href='/login?next='+encodeURIComponent(location.pathname)}return r})}})();</script>
+"""
+
 
 @app.get("/", include_in_schema=False)
 @app.get("/index.html", include_in_schema=False)
@@ -2108,6 +2198,8 @@ def index_page():
             detail=f"前端文件缺失：{path}（打包时请确认 static/index.html 已被打入）",
         )
     html = html.replace(SERVICE_PORT_PLACEHOLDER, str(ACTUAL_PORT))
+    if auth.ENABLED:
+        html = html.replace("</body>", _AUTH_SNIPPET + "</body>", 1)
     return HTMLResponse(
         html,
         headers={

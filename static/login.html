@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>登录 · 多平台无水印下载</title>
+<style>
+:root{box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0}
+button,input{font:inherit;color:inherit}
+.stage{position:relative;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:max(20px,env(safe-area-inset-top,0px)) 16px max(20px,env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--fg);font-family:var(--font);overflow:hidden}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--deco)}
+.box{position:relative;z-index:1;width:100%;max-width:400px;padding:34px 28px 26px;background:var(--card);border:var(--bw) solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);backdrop-filter:blur(var(--blur,0));-webkit-backdrop-filter:blur(var(--blur,0))}
+.logo{display:flex;align-items:center;gap:12px;font-size:24px;font-weight:800;letter-spacing:var(--ls);font-family:var(--fh,inherit)}
+.logo i{width:.75em;height:.75em;border-radius:var(--rl);background:var(--btn);box-shadow:var(--glow)}
+.sub{margin:8px 0 24px;color:var(--fg2);font-size:14px}
+label{display:block;margin:0 0 14px;font-size:14px;font-weight:600}
+.f{position:relative;margin-top:7px}
+input[type=text],input[type=password]{width:100%;padding:13px 14px;border:var(--bw) solid var(--bd);border-radius:var(--rs);background:var(--inbg);outline:0;font-weight:400}
+input:focus-visible{border-color:var(--a);box-shadow:var(--focus)}
+.f input[type=password],.f input.pw{padding-right:64px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;padding:8px 10px;font-size:13px;color:var(--fg2);border-radius:8px}
+.eye:focus-visible,.go:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.rm{display:flex;align-items:center;gap:8px;margin:2px 0 18px;font-size:14px;font-weight:400;color:var(--fg2);cursor:pointer}
+.rm input{width:17px;height:17px;accent-color:var(--a)}
+.go{width:100%;padding:13px;border-radius:var(--rs);font-weight:700;font-size:16px;border:var(--bw) solid var(--btnbd,transparent);background:var(--btn);color:var(--btnfg);box-shadow:var(--btnsh);transition:.15s}
+.go[disabled]{opacity:.6;cursor:wait}
+.err{min-height:22px;margin:12px 0 0;color:var(--err);font-size:14px}
+.tip{margin:14px 0 0;text-align:center;color:var(--fg2);font-size:12px}
+
+/* 预览用的风格切换条（线上默认隐藏） */
+.sw{position:fixed;top:max(10px,env(safe-area-inset-top,0px));left:0;right:0;z-index:9;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:0 12px}
+.sw[hidden]{display:none}
+.sw button{border:0;border-radius:999px;padding:8px 16px;font-size:14px;background:rgba(18,18,28,.82);color:#fff}
+.sw button[aria-pressed="true"]{background:#fff;color:#111;font-weight:700}
+
+[data-t="aurora"]{--bg:#0a0b1c;--fg:#eef0ff;--fg2:#a3a8cc;--card:rgba(255,255,255,.07);--bd:rgba(255,255,255,.14);--bw:1px;--sh:0 30px 70px -24px rgba(0,0,0,.75);--blur:22px;--r:26px;--rs:14px;--rl:50%;--a:#7c8cff;--btn:linear-gradient(135deg,#7c5cff,#22d3ee);--btnfg:#fff;--btnsh:0 12px 30px -8px rgba(94,110,255,.7);--glow:0 0 22px rgba(124,92,255,.85);--inbg:rgba(0,0,0,.3);--focus:0 0 0 4px rgba(124,140,255,.25);--err:#ff8fa3;--ls:.02em;--font:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--deco:radial-gradient(560px 420px at 12% 6%,rgba(124,92,255,.5),transparent 70%),radial-gradient(520px 420px at 92% 18%,rgba(34,211,238,.34),transparent 70%),radial-gradient(600px 460px at 50% 100%,rgba(244,114,182,.3),transparent 70%)}
+[data-t="neon"]{--bg:#05060f;--fg:#e8f6ff;--fg2:#7f93ad;--card:rgba(9,14,32,.86);--bd:rgba(0,240,255,.4);--bw:1px;--sh:0 0 40px -6px rgba(0,240,255,.32);--r:6px;--rs:4px;--rl:2px;--a:#00f0ff;--btn:#00f0ff;--btnfg:#021018;--btnbd:#00f0ff;--btnsh:0 0 22px rgba(0,240,255,.65);--glow:0 0 18px #ff2bd6;--inbg:rgba(0,0,0,.5);--focus:0 0 0 3px rgba(0,240,255,.2),0 0 22px rgba(0,240,255,.35);--err:#ff6ee7;--ls:.1em;--font:"SF Mono","Cascadia Mono",Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace;--fh:var(--font);--deco:linear-gradient(rgba(0,240,255,.07) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(0,240,255,.07) 1px,transparent 1px) 0 0/44px 44px,radial-gradient(700px 400px at 50% -80px,rgba(255,43,214,.3),transparent 70%)}
+[data-t="neon"] .logo{text-shadow:0 0 18px rgba(0,240,255,.7)}
+[data-t="soft"]{--bg:#f3f1ff;--fg:#1d1b33;--fg2:#6c6a8a;--card:rgba(255,255,255,.82);--bd:rgba(255,255,255,.95);--bw:1px;--sh:0 30px 60px -30px rgba(92,64,255,.38);--blur:14px;--r:30px;--rs:16px;--rl:34%;--a:#6a4cff;--btn:linear-gradient(135deg,#6a4cff,#ff6aa8);--btnfg:#fff;--btnsh:0 14px 28px -10px rgba(106,76,255,.65);--glow:0 8px 20px rgba(255,106,168,.5);--inbg:rgba(243,241,255,.9);--focus:0 0 0 4px rgba(106,76,255,.16);--err:#d6336c;--ls:-.01em;--font:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--deco:radial-gradient(520px 380px at 8% 0,rgba(138,116,255,.38),transparent 70%),radial-gradient(520px 380px at 100% 10%,rgba(255,150,190,.38),transparent 70%),radial-gradient(500px 360px at 60% 100%,rgba(120,210,255,.3),transparent 70%)}
+[data-t="brut"]{--bg:#ffd93d;--fg:#111;--fg2:#3b3b3b;--card:#fff;--bd:#111;--bw:3px;--sh:8px 8px 0 #111;--r:14px;--rs:10px;--rl:6px;--a:#ff4d8d;--btn:#ff4d8d;--btnfg:#111;--btnbd:#111;--btnsh:4px 4px 0 #111;--glow:3px 3px 0 #111;--inbg:#fffbe6;--focus:5px 5px 0 #111;--err:#c1121f;--ls:-.02em;--font:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--deco:radial-gradient(#11111122 1.5px,transparent 1.6px) 0 0/22px 22px}
+[data-t="brut"] .logo{font-weight:900}
+[data-t="brut"] .go:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #111}
+[data-t="brut"] .eye{color:#111}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage" data-t="aurora">
+  <nav class="sw" id="sw" hidden aria-label="切换风格">
+    <button type="button" aria-pressed="true" data-t="aurora">极光玻璃</button>
+    <button type="button" aria-pressed="false" data-t="neon">霓虹赛博</button>
+    <button type="button" aria-pressed="false" data-t="soft">清透渐变</button>
+    <button type="button" aria-pressed="false" data-t="brut">新粗野</button>
+  </nav>
+
+  <main class="box">
+    <div class="logo"><i></i>多平台无水印下载</div>
+    <p class="sub">请先登录，再使用解析和下载功能</p>
+
+    <form id="form" autocomplete="on">
+      <label>账号
+        <div class="f"><input type="text" id="u" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></div>
+      </label>
+      <label>密码
+        <div class="f">
+          <input type="password" id="p" name="password" autocomplete="current-password" required>
+          <button type="button" class="eye" id="eye" aria-label="显示密码" aria-pressed="false">显示</button>
+        </div>
+      </label>
+      <label class="rm"><input type="checkbox" id="rm" checked>30 天内保持登录</label>
+      <button class="go" id="go" type="submit">登录</button>
+      <p class="err" id="err" role="alert" aria-live="polite"></p>
+    </form>
+    <p class="tip">忘记密码？在群晖的容器环境变量里修改 AUTH_PASS 即可</p>
+  </main>
+</div>
+
+<script>
+(function(){
+  var DEMO = false;   /* 预览版会改成 true：不真正提交 */
+  var stage=document.getElementById('stage');
+  var $=function(id){return document.getElementById(id)};
+
+  /* 风格：?t=neon 可指定，其余默认极光玻璃 */
+  var m=/[?&]t=(aurora|neon|soft|brut)/.exec(location.search);
+  if(m) stage.dataset.t=m[1];
+  $('sw').addEventListener('click',function(e){
+    var b=e.target.closest('button[data-t]'); if(!b) return;
+    stage.dataset.t=b.dataset.t;
+    this.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});
+  });
+
+  $('eye').addEventListener('click',function(){
+    var show=$('p').type==='password';
+    $('p').type=show?'text':'password';
+    this.textContent=show?'隐藏':'显示';
+    this.setAttribute('aria-pressed',show);
+    this.setAttribute('aria-label',show?'隐藏密码':'显示密码');
+  });
+
+  function nextUrl(){
+    var n=new URLSearchParams(location.search).get('next')||'/';
+    return (n.charAt(0)==='/'&&n.charAt(1)!=='/'&&n.indexOf('\\')<0)?n:'/';
+  }
+
+  $('form').addEventListener('submit',function(e){
+    e.preventDefault();
+    var err=$('err'), go=$('go');
+    err.textContent='';
+    if(DEMO){err.textContent='这是预览，未真正提交';return}
+    go.disabled=true; go.textContent='登录中…';
+    fetch('/api/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:$('u').value,password:$('p').value,remember:$('rm').checked})
+    }).then(function(r){
+      return r.json().catch(function(){return {}}).then(function(d){return {ok:r.ok,d:d}});
+    }).then(function(x){
+      if(x.ok){location.replace(nextUrl());return}
+      err.textContent=x.d.detail||'登录失败，请重试';
+      go.disabled=false; go.textContent='登录'; $('p').select();
+    }).catch(function(){
+      err.textContent='连接服务失败，请检查网络后重试';
+      go.disabled=false; go.textContent='登录';
+    });
+  });
+})();
+</script>
+</body>
+</html>
