@@ -1,0 +1,16 @@
+services:
+  douyin-wm-downloader:
+    # 把「你的github用户名」换成小写的 GitHub 用户名
+    image: ghcr.io/你的github用户名/douyin-wm-downloader:latest
+    container_name: douyin-wm-downloader
+    restart: unless-stopped
+    ports:
+      - "8787:8787"          # 左边是群晖对外端口，被占用可改，如 "18787:8787"
+    volumes:
+      - ./data:/data         # 持久化 B站 Cookie / TikTok 代理等配置
+    environment:
+      - TZ=Asia/Shanghai
+      # 需要代理访问 TikTok 时再打开（填局域网内代理的真实 IP，别写 127.0.0.1）
+      # - HTTPS_PROXY=http://192.168.1.x:7890
+      # - HTTP_PROXY=http://192.168.1.x:7890
+      # - BILI_SESSDATA=

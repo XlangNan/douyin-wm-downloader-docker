@@ -1,0 +1,17 @@
+# 想在群晖本地构建时用：docker compose -f docker-compose.build.yml up -d --build
+# 国内网络加： --build-arg USE_CN_MIRROR=1 （或取消下面 args 的注释）
+services:
+  douyin-wm-downloader:
+    build:
+      context: .
+      # args:
+      #   USE_CN_MIRROR: "1"
+    image: douyin-wm-downloader:latest
+    container_name: douyin-wm-downloader
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./data:/data
+    environment:
+      - TZ=Asia/Shanghai
