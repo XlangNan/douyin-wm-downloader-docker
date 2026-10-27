@@ -84,11 +84,14 @@ input:focus-visible{border-color:var(--a);box-shadow:var(--focus)}
   var $=function(id){return document.getElementById(id)};
 
   /* 风格：?t=neon 可指定，其余默认极光玻璃 */
-  var m=/[?&]t=(aurora|neon|soft|brut)/.exec(location.search);
-  if(m) stage.dataset.t=m[1];
+  var m=/[?&]t=(aurora|neon|soft|brut)/.exec(location.search), saved='';
+  try{saved=localStorage.getItem('wm_theme')||''}catch(e){}
+  if(saved==='classic') saved='soft';
+  if(m) stage.dataset.t=m[1]; else if(/^(aurora|neon|soft|brut)$/.test(saved)) stage.dataset.t=saved;
   $('sw').addEventListener('click',function(e){
     var b=e.target.closest('button[data-t]'); if(!b) return;
     stage.dataset.t=b.dataset.t;
+    try{localStorage.setItem('wm_theme',b.dataset.t)}catch(e){}
     this.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});
   });
 

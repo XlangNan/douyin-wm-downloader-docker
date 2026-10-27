@@ -311,6 +311,80 @@
     .modal{padding:16px 10px}
   }
 </style>
+<script>
+/* 在首屏绘制前套用主题，避免闪一下旧样式。默认「极光玻璃」，localStorage 键 wm_theme 与登录页共用 */
+(function(){var T=['aurora','neon','soft','brut','classic'],t='aurora';
+try{var s=localStorage.getItem('wm_theme');if(T.indexOf(s)>=0)t=s}catch(e){}
+var h=document.documentElement;h.setAttribute('data-theme',t);if(t!=='classic')h.classList.add('tx')})();
+</script>
+<style id="wm-theme">
+/* ===== 主题层：只在 html.tx 下生效；选「经典」则整层失效，回到原样 ===== */
+html.tx[data-theme="aurora"]{--bg:#0a0b1c;--card:rgba(255,255,255,.07);--text:#eef0ff;--text-2:#a3a8cc;--line:rgba(255,255,255,.13);--radius:22px;--rs:13px;--shadow:0 24px 60px -26px rgba(0,0,0,.75);--blur:20px;--soft:rgba(255,255,255,.07);--soft-h:rgba(255,255,255,.13);--input:rgba(0,0,0,.3);--muted:#7f85ad;--tx-a:#7c8cff;--tx-g:linear-gradient(135deg,#7c5cff,#22d3ee);--tx-fg:#fff;--tx-sh:0 10px 28px -8px rgba(94,110,255,.65);--modal:#15172e;--font:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--deco:radial-gradient(560px 420px at 12% 6%,rgba(124,92,255,.5),transparent 70%),radial-gradient(520px 420px at 92% 18%,rgba(34,211,238,.34),transparent 70%),radial-gradient(600px 460px at 50% 100%,rgba(244,114,182,.3),transparent 70%)}
+html.tx[data-theme="neon"]{--bg:#05060f;--card:rgba(9,14,32,.86);--text:#e8f6ff;--text-2:#7f93ad;--line:rgba(0,240,255,.3);--radius:6px;--rs:4px;--shadow:0 0 34px -8px rgba(0,240,255,.3);--blur:0px;--soft:rgba(0,240,255,.05);--soft-h:rgba(0,240,255,.12);--input:rgba(0,0,0,.5);--muted:#56708a;--tx-a:#00f0ff;--tx-g:#00f0ff;--tx-fg:#021018;--tx-sh:0 0 20px rgba(0,240,255,.6);--modal:#080d1f;--font:"SF Mono","Cascadia Mono",Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace;--deco:linear-gradient(rgba(0,240,255,.07) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(0,240,255,.07) 1px,transparent 1px) 0 0/44px 44px,radial-gradient(700px 400px at 50% -80px,rgba(255,43,214,.3),transparent 70%)}
+html.tx[data-theme="soft"]{--bg:#f3f1ff;--card:rgba(255,255,255,.8);--text:#1d1b33;--text-2:#6c6a8a;--line:rgba(29,27,51,.1);--radius:26px;--rs:15px;--shadow:0 28px 56px -30px rgba(92,64,255,.38);--blur:14px;--soft:rgba(106,76,255,.07);--soft-h:rgba(106,76,255,.13);--input:rgba(243,241,255,.9);--muted:#9a98b8;--tx-a:#6a4cff;--tx-g:linear-gradient(135deg,#6a4cff,#ff6aa8);--tx-fg:#fff;--tx-sh:0 14px 28px -10px rgba(106,76,255,.6);--modal:#fff;--font:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--deco:radial-gradient(520px 380px at 8% 0,rgba(138,116,255,.38),transparent 70%),radial-gradient(520px 380px at 100% 10%,rgba(255,150,190,.38),transparent 70%),radial-gradient(500px 360px at 60% 100%,rgba(120,210,255,.3),transparent 70%)}
+html.tx[data-theme="brut"]{--bg:#ffd93d;--card:#fff;--text:#111;--text-2:#3b3b3b;--line:#111;--radius:14px;--rs:10px;--shadow:7px 7px 0 #111;--blur:0px;--soft:#fff3b0;--soft-h:#ffe66d;--input:#fffbe6;--muted:#555;--tx-a:#ff4d8d;--tx-g:#ff4d8d;--tx-fg:#111;--tx-sh:4px 4px 0 #111;--modal:#fff;--font:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--deco:radial-gradient(#11111122 1.5px,transparent 1.6px) 0 0/22px 22px}
+
+html.tx body{background:var(--bg);font-family:var(--font)}
+html.tx body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:var(--deco)}
+html.tx .wrap{z-index:1}
+html.tx .logo{letter-spacing:.01em}
+html.tx .logo .dot{background:var(--tx-g);box-shadow:0 0 20px var(--tx-a);border-radius:calc(var(--rs) * .7)}
+html.tx .card{backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur))}
+html.tx .btn-settings{backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur))}
+html.tx .tab,html.tx .btn-primary,html.tx .btn-ghost,html.tx .btn-dl,html.tx .btn-mini,html.tx textarea,html.tx .quality select,html.tx .history-item,html.tx .btn-settings,html.tx .cfg-seg .seg{border-radius:var(--rs)}
+html.tx .tab:hover,html.tx .btn-settings:hover,html.tx .cfg-seg .seg:hover{background:var(--soft-h);color:var(--text)}
+html.tx .tab.active{background:var(--tx-g)!important;color:var(--tx-fg);border-color:transparent;box-shadow:var(--tx-sh)}
+html.tx .tab.active .dot{background:var(--tx-fg)}
+html.tx textarea,html.tx .quality select,html.tx #cfgText,html.tx #ttProxy{background:var(--input);color:var(--text);border-color:var(--line)}
+html.tx textarea:focus,html.tx .quality select:focus{background:var(--input);border-color:var(--tx-a);box-shadow:0 0 0 3px color-mix(in srgb,var(--tx-a) 25%,transparent)}
+html.tx textarea::placeholder{color:var(--muted)}
+html.tx .btn-primary,html.tx .btn-dl{background:var(--tx-g);color:var(--tx-fg);box-shadow:var(--tx-sh)}
+html.tx .btn-dl.sec{background:var(--soft-h);color:var(--text);box-shadow:none}
+html.tx .btn-ghost,html.tx .btn-mini,html.tx .btn-dl.gray,html.tx .tag-fallback{background:var(--soft);color:var(--text-2);box-shadow:none}
+html.tx .btn-ghost:hover,html.tx .btn-mini:hover,html.tx .btn-dl.gray:hover{background:var(--soft-h);color:var(--text)}
+html.tx .tag-hd{background:var(--tx-g);color:var(--tx-fg)}
+html.tx .spinner{border-color:var(--line);border-top-color:var(--tx-a)}
+html.tx .history-item,html.tx .cfg-status,html.tx .mux-note{background:var(--soft);border-color:var(--line);color:var(--text-2)}
+html.tx .history-item:hover{background:var(--soft-h)}
+html.tx .mux-bar{background:var(--line)}
+html.tx .mux-bar>i{background:var(--tx-a)}
+html.tx .hi-right small,html.tx .del,html.tx .modal-x,html.tx footer{color:var(--muted)}
+html.tx .cfg-seg .seg.active{background:var(--tx-g);color:var(--tx-fg);border-color:transparent}
+html.tx .modal-box{background:var(--modal);border:1px solid var(--line);color:var(--text)}
+html.tx .modal-foot{background:var(--soft)}
+html.tx .btn-settings.on{background:var(--soft);color:#34d399;border-color:var(--line)}
+html.tx .badge.plat,html.tx .badge.plat.tt,html.tx .badge.plat.xhs{background:var(--soft-h);color:var(--text)}
+html.tx .fig-meta .hi{color:var(--tx-a)}
+/* 深色主题：把原来浅色的提示条改成半透明 */
+html.tx[data-theme="aurora"] .notice,html.tx[data-theme="neon"] .notice{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35);color:#fcd34d}
+html.tx[data-theme="aurora"] :is(.notice.warn,.error,.cfg-msg.err),html.tx[data-theme="neon"] :is(.notice.warn,.error,.cfg-msg.err){background:rgba(244,63,94,.14);border-color:rgba(244,63,94,.4);color:#fda4af}
+html.tx[data-theme="aurora"] .cfg-msg.ok,html.tx[data-theme="neon"] .cfg-msg.ok{background:rgba(34,197,94,.13);border-color:rgba(34,197,94,.4);color:#86efac}
+html.tx[data-theme="aurora"] .cfg-msg.warn,html.tx[data-theme="neon"] .cfg-msg.warn{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35);color:#fcd34d}
+html.tx[data-theme="aurora"] :is(.notice code,.cfg-status code,.cfg-help code),html.tx[data-theme="neon"] :is(.notice code,.cfg-status code,.cfg-help code){background:rgba(255,255,255,.1)}
+/* 霓虹 */
+html.tx[data-theme="neon"] .logo{text-shadow:0 0 18px rgba(0,240,255,.7)}
+html.tx[data-theme="neon"] .card{border-color:rgba(0,240,255,.4)}
+html.tx[data-theme="neon"] .tab.active{border:1px solid #ff2bd6;background:rgba(255,43,214,.16)!important;color:#ff6ee7;box-shadow:0 0 18px rgba(255,43,214,.5)}
+html.tx[data-theme="neon"] .tab.active .dot{background:#ff6ee7}
+/* 新粗野 */
+html.tx[data-theme="brut"] .card,html.tx[data-theme="brut"] .modal-box{border:3px solid #111}
+html.tx[data-theme="brut"] :is(.tab,.btn-primary,.btn-ghost,.btn-dl,.btn-mini,.btn-settings,textarea,.quality select,.history-item){border:3px solid #111!important}
+html.tx[data-theme="brut"] :is(.tab.active,.btn-primary,.btn-dl,.btn-settings){box-shadow:4px 4px 0 #111}
+html.tx[data-theme="brut"] .tab.active{background:#3a86ff!important;color:#fff}
+html.tx[data-theme="brut"] :is(.btn-primary,.btn-dl,.tab):active{transform:translate(3px,3px);box-shadow:1px 1px 0 #111}
+html.tx[data-theme="brut"] .logo{font-weight:900}
+html.tx[data-theme="brut"] .logo .dot{border:3px solid #111;box-shadow:3px 3px 0 #111}
+
+/* 主题切换按钮 */
+#wmTheme{position:fixed;left:14px;bottom:14px;z-index:55;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+#wmTheme>button{border:0;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;background:rgba(20,20,30,.78);color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#wmThemeList{display:none;position:absolute;left:0;bottom:44px;flex-direction:column;gap:4px;padding:6px;border-radius:14px;background:rgba(20,20,30,.92);min-width:132px}
+#wmTheme.open #wmThemeList{display:flex}
+#wmThemeList button{border:0;text-align:left;padding:9px 12px;border-radius:9px;font-size:13px;font-weight:500;background:transparent;color:#fff}
+#wmThemeList button[aria-pressed="true"]{background:#fff;color:#111;font-weight:700}
+#wmTheme button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){html.tx *{transition:none!important}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -2191,6 +2265,31 @@ setPlatform('douyin');
 loadHistory();
 // 未配置时这次调用不触发任何 B站 请求，配置过才会探一次 nav 用于点亮绿点
 loadCfgStatus();
+</script>
+<div id="wmTheme">
+  <div id="wmThemeList" role="menu" aria-label="选择主题">
+    <button type="button" data-th="aurora">极光玻璃</button>
+    <button type="button" data-th="neon">霓虹赛博</button>
+    <button type="button" data-th="soft">清透渐变</button>
+    <button type="button" data-th="brut">新粗野</button>
+    <button type="button" data-th="classic">经典（原样）</button>
+  </div>
+  <button type="button" id="wmThemeBtn" aria-haspopup="true" aria-expanded="false">主题</button>
+</div>
+<script>
+(function(){
+  var box=document.getElementById('wmTheme'),btn=document.getElementById('wmThemeBtn'),h=document.documentElement;
+  function mark(){var cur=h.getAttribute('data-theme');box.querySelectorAll('[data-th]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.th===cur)})}
+  btn.addEventListener('click',function(e){e.stopPropagation();var o=box.classList.toggle('open');btn.setAttribute('aria-expanded',o)});
+  document.addEventListener('click',function(){box.classList.remove('open');btn.setAttribute('aria-expanded','false')});
+  box.addEventListener('click',function(e){
+    var b=e.target.closest('[data-th]');if(!b)return;
+    var t=b.dataset.th;h.setAttribute('data-theme',t);h.classList.toggle('tx',t!=='classic');
+    try{localStorage.setItem('wm_theme',t)}catch(x){}
+    mark();
+  });
+  mark();
+})();
 </script>
 </body>
 </html>
